@@ -65,16 +65,16 @@ Now all tasks are availible for testing/running
 ### Test
 After building, one can test a specific task by running the following
 ```bash
-$ docker run -ti -v {ABSOULTE_PATH_TO_REPO}/logs:/usr/rosetta/logs -v 
-{ABSOULTE_PATH_TO_REPO}/out:/usr/rosetta/out -rm rosetta-python 
+$ docker run -ti -v {ABSOULTE_PATH_TO_REPO}/logs:/usr/rosetta/logs 
+-v {ABSOULTE_PATH_TO_REPO}/out:/usr/rosetta/out -rm rosetta-python 
 unittest tests.{TASKNAME}_test
 ```
 
 ### Run
 After building, one can run a specific task by running the following
 ```bash
-$ docker run -ti -v {ABSOULTE_PATH_TO_REPO}/logs:/usr/rosetta/logs -v 
-{ABSOULTE_PATH_TO_REPO}/out:/usr/rosetta/out -rm rosetta-python 
+$ docker run -ti -v {ABSOULTE_PATH_TO_REPO}/logs:/usr/rosetta/logs 
+-v {ABSOULTE_PATH_TO_REPO}/out:/usr/rosetta/out -rm rosetta-python 
 tasks.{TASKNAME}
 ```
 

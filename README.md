@@ -17,7 +17,7 @@ to Rosetta Code.
 ## Tasks Lists
 Task Descriptions are quoted from their associated task pages
 
-- [*] [Chaos Game][Chaos Game Task]
+- [x] [Chaos Game][Chaos Game Task]
 
   *"Play the Chaos Game using the corners of an equilateral triangle as 
 the reference points. Add a starting point at random (preferably 
@@ -26,7 +26,7 @@ starting point and one of the reference points. This reference point
 is chosen at random. After a sufficient number of iterations, the image 
 of a Sierpinski Triangle should emerge."*
 
-- [ ] [Pythagoras Tree][Pythagoras Tree Task]
+- [x] [Pythagoras Tree][Pythagoras Tree Task]
 
   *"Construct a Pythagoras tree of order 7 using only vectors 
 (no rotation or trig functions)."*

@@ -20,24 +20,26 @@ class Z:
   def _str_to_value(val):
     return 
   def _int_to_value(val):
-    return 
+    return
+  
   # Python Fluff
   def __repr__(self):
-    pass
+    return ("" if self.sign else "-") +"0z"+str(self.value)
   def __hash__(self):
-    pass
+    return hash(int(self))
   def __bool__(self):
-    pass
+    return self != Z("0z0")
   def __index__(self):
-    pass
+    return int(self) 
   def __complex__(self):
-    pass
+    return complex(int(self))
   def __int__(self):
+    """ to Base10 """
     pass
   def __float__(self):
-    pass
+    return float(int(self))
   def __round__(self,n=None):
-    pass
+    return Z(self)
 
   # Zeckendorf's Arithmetic
   def __lt__(self,other):
@@ -51,19 +53,23 @@ class Z:
   def __mul__(self, other):
     pass
   def __floordiv__(self, other):
-    pass
+    q,_ = divmod(self,other)
+    return q
   def __mod__(self, other):
-    pass
+    _,r = divmod(self,other)
+    return r
   def __divmod__(self, other):
     pass
-  def __pow__(self, other,modulo=None):
+  def __pow__(self, other, modulo=None):
     pass
   def __neg__(self):
-    pass
+    self.sign = False
+    return Z(self)
   def __pos__(self):
-    pass
+    return Z(self)
   def __abs__(self):
-    pass
+    self.sign = True
+    return Z(self) 
 
 
 def task(argv):

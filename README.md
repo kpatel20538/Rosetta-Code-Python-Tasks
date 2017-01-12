@@ -17,7 +17,7 @@ to Rosetta Code.
 ## Tasks Lists
 Task Descriptions are quoted from their associated task pages
 
-- [ ] [Chaos Game][Chaos Game Task]
+- [*] [Chaos Game][Chaos Game Task]
 
   *"Play the Chaos Game using the corners of an equilateral triangle as 
 the reference points. Add a starting point at random (preferably 

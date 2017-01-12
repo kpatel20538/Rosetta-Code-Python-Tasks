@@ -14,10 +14,11 @@ RUN pip install Pillow
 RUN mkdir -p /usr/rosetta
 RUN mkdir -p /usr/rosetta/tasks
 RUN mkdir -p /usr/rosetta/tests
-RUN mkdir -p /usr/rosetta/logs
-RUN mkdir -p /usr/rosetta/out
 RUN touch /usr/rosetta/tasks/__init__.py
 RUN touch /usr/rosetta/tests/__init__.py
+
+RUN mkdir -p /usr/rosetta/logs
+RUN mkdir -p /usr/rosetta/out
 
 COPY finished /usr/rosetta/tasks
 COPY incomplete /usr/rosetta/tasks

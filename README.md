@@ -40,9 +40,9 @@ equivalent expression in infix notation."*
 - [ ] [Zeckendorf Arithmetic][Zeckendorf Arithmetic Task]
 
   *"This task is a total immersion zeckendorf task; using decimal 
-numbers will attract serious disapprobation.
+numbers will attract serious disapprobation.*
 
-  The task is to implement addition, subtraction, multiplication, and 
+  *The task is to implement addition, subtraction, multiplication, and 
 division using Zeckendorf number representation. Optionally provide 
 decrement, increment and comparitive operation functions."*
 

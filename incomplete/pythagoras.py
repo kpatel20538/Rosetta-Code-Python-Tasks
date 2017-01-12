@@ -1,6 +1,6 @@
 import sys
 
-def gather_squares_triangles(p1,p2,depth)
+def gather_squares_triangles(p1,p2,depth):
   """ Draw Square and Right Triangle given 2 points, 
   Recurse on new points
   

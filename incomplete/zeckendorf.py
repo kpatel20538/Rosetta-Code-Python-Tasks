@@ -3,59 +3,71 @@ import numbers
 import re
 import sys
 
-@functools.total_ordering()
+@functools.total_ordering
 class Z:
-  def __init__(self,val):
-    if isinstance(val,numbers.Number):
-      self.sign = abs(val) == val
-      self.value = self._int_to_value(abs(int(val)))
-    elif type(val) == Z:
-      self.sign = val.sign
-      self.value = val.value
-    elif type(val) == str:
-      if not re.fullmatch(r"0z0|\-?0z1[01]*",val):
+  def __init__(self,*args):
+    if len(args) == 2:
+      self.sign = args[0]
+      self.value = args[1]
+    elif isinstance(args[0],numbers.Number):
+      self.sign = abs(args[0]) == args[0]
+      self.value = self._int_to_value(abs(int(args[0])))
+    elif type(args[0]) == Z:
+      self.sign = args[0].sign
+      self.value = args[0].value
+    elif type(args[0]) == str:
+      if not re.fullmatch(r"0z0|\-?0z1[01]*",args[0]):
         raise ValueError("Malformed String")
-      self.sign = val[0] != "-"
-      self.value = self._str_to_value(val.split("0z")[-1])
+      self.sign = args[0][0] != "-"
+      self.value = self._str_to_value(args[0].split("0z")[-1])
   def _str_to_value(self,val):
-    v,i = 0,0
+    v,i = 0,1
     for c in val[::-1]:
       if c == "1":
         v |= i
       i <<= 1
     return v
   def _int_to_value(self,val):
-    v,i,a,b = 0,0,1,1
-    while val <= b:
-      i,a,b = i+1,b,b+a
-    while val:
-      if val > b:
+    v,i,a,b = 0,1,1,1
+    while val > b:
+      i,a,b = i<<1,b,b+a
+    while b != a:
+      if val >= b:
         val -= b
-        v |= 1<<i
-      a,b = b-a,a
+        v |= i
+      a,b,i = b-a,a,i>>1
     return v
   # Python Fluff
-  def __repr__(self):
-    return ("" if self.sign else "-") +"0z"+str(self.value)
-  def __hash__(self):
-    return hash(int(self))
-  def __bool__(self):
-    return self != Z("0z0")
-  def __index__(self):
-    return int(self) 
-  def __complex__(self):
-    return complex(int(self))
   def __int__(self):
     """ to Base10 """
-    v,a,b = 0,1,1
-    for i in range(self.value.bit_length()):
-      v += b*bool(z&1<<i)
-      a,b = b-a,a
-    return v
+    v,i,a,b = 0,1,1,1
+    while self.value > b:
+      i,a,b = i<<1,b,b+a
+    while i != 1:
+      v += b if self.value&i else 0
+      i,a,b = i>>1,b-a,a
+    return (1 if self.sign else -1)*v
   def __float__(self):
     return float(int(self))
+  def __complex__(self):
+    return complex(int(self))
   def __round__(self,n=None):
     return Z(self)
+  
+  def __repr__(self):
+    msg = ""
+    i = 1<<(self.value.bit_length())
+    while i != 1:
+      i >>= 1
+      msg += "1" if self.value&i else "0"
+    return ("" if self.sign else "-") +"0z"+msg
+  def __hash__(self):
+    return hash(int(self))
+  def __index__(self):
+    return int(self) 
+  def __bool__(self):
+    return self != Z("0z0")
+
 
   # Zeckendorf's Arithmetic
   def __lt__(self,other):
@@ -67,7 +79,12 @@ class Z:
   def __sub__(self, other):
     return self + (-other)
   def __mul__(self, other):
-    pass
+    res_sign = not (self.sign ^ self.other)
+    result,i,za,zb = Z("0z0"),1,abs(other),abs(other)
+    while i < 1<<self.value.bit_length():
+      result += zb if self.value&i else 0
+      i,za,zb = i<<1,zb,za+ab
+    return result if res_sign else -result
   def __floordiv__(self, other):
     q,_ = divmod(self,other)
     return q
@@ -77,15 +94,19 @@ class Z:
   def __divmod__(self, other):
     pass
   def __pow__(self, other, modulo=None):
-    pass
+    if other < Z("0z0") or (other == Z("0z0") and self == Z("0z0")):
+      raise ValueError("Negative Power or 0^0 detected")
+    result,i,za,zb = Z("0z0"),1,abs(other),abs(other)
+    while i < 1<<self.value.bit_length():
+      result *= zb if self.value&i else 0
+      i,za,zb = i<<1,zb,za*ab
+    return result
   def __neg__(self):
-    self.sign = False
-    return Z(self)
+    return Z(not self.sign,self.value)
   def __pos__(self):
     return Z(self)
   def __abs__(self):
-    self.sign = True
-    return Z(self) 
+    return Z(True,self.value) 
 
 
 def task(argv):

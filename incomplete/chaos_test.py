@@ -6,7 +6,7 @@ import logging
 class TestChaos(unittest.TestCase):
   def setUp(self):
     """ Test Case Enviroment """
-    logging.basicConfig(filename="chaos_test.log",level=logging.DEBUG)
+    logging.basicConfig(filename="./logs/chaos_test.log",level=logging.DEBUG)
     logging.info('TestChaos initialized')
   def test_point_in_triangle(self):
     """ Testing if random point is bounded by triangle  """ 
@@ -19,12 +19,12 @@ class TestChaos(unittest.TestCase):
   def test_chaos_game(self):
     """ Testing if chaos_game changes current position properly """
     logging.info("test_chaos_game()")
-    staring_point = (0.0,0.0)
-    reference_points = [(16.0,0.0)]
+    staring_point = (16.0,0.0)
+    reference_points = [(0.0,0.0)]
     logging.info("Referneces @ {}, Starting @ {} ".format(reference_points,staring_point))
     generated_points = tasks.chaos.rasterize(tasks.chaos.chaos_game(reference_points,staring_point,timeout = 3))
     logging.info("Points Generated: {}".format(generated_points))
-    self.assertListEquals(generated_points,[(16,0),(8,0),(4,0),(2,0)])
+    self.assertListEqual(generated_points,[(16,0),(8,0),(4,0),(2,0)])
   def test_rasterize(self):
     """ Testing if rasterize rounds numbers cleanly"""
     logging.info("test_rasterize()")
@@ -32,6 +32,6 @@ class TestChaos(unittest.TestCase):
     logging.info("Rasterizing Points: {}".format(points))
     rastered = tasks.chaos.rasterize(points)
     logging.info("Post Rasterized Points: {}".format(rastered))
-    self.assertListEquals(rastered,[(2,4),(1,4),(2,3),(2,4)])
+    self.assertListEqual(rastered,[(2,4),(1,4),(2,3),(2,4)])
 if __name__ == '__main__':
   unittest.main()

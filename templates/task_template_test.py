@@ -6,7 +6,7 @@ import logging
 class TestTemplate(unittest.TestCase):
   def setUp(self):
     """ Test Case Enviroment """
-    logging.basicConfig(filename="template_test.log",level=logging.DEBUG)
+    logging.basicConfig(filename="./logs/template_test.log",level=logging.DEBUG)
     logging.info('TestTemplate initialized')
   def test_truth(self):
     """ Test Decription 1 """ 

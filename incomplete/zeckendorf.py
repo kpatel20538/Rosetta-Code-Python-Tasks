@@ -17,11 +17,23 @@ class Z:
         raise ValueError("Malformed String")
       self.sign = val[0] != "-"
       self.value = self._str_to_value(val.split("0z")[-1])
-  def _str_to_value(val):
-    return 
-  def _int_to_value(val):
-    return
-  
+  def _str_to_value(self,val):
+    v,i = 0,0
+    for c in val[::-1]:
+      if c == "1":
+        v |= i
+      i <<= 1
+    return v
+  def _int_to_value(self,val):
+    v,i,a,b = 0,0,1,1
+    while val <= b:
+      i,a,b = i+1,b,b+a
+    while val:
+      if val > b:
+        val -= b
+        v |= 1<<i
+      a,b = b-a,a
+    return v
   # Python Fluff
   def __repr__(self):
     return ("" if self.sign else "-") +"0z"+str(self.value)
@@ -35,7 +47,11 @@ class Z:
     return complex(int(self))
   def __int__(self):
     """ to Base10 """
-    pass
+    v,a,b = 0,1,1
+    for i in range(self.value.bit_length()):
+      v += b*bool(z&1<<i)
+      a,b = b-a,a
+    return v
   def __float__(self):
     return float(int(self))
   def __round__(self,n=None):
@@ -49,7 +65,7 @@ class Z:
   def __add__(self, other):
     pass
   def __sub__(self, other):
-    pass
+    return self + (-other)
   def __mul__(self, other):
     pass
   def __floordiv__(self, other):
@@ -76,6 +92,10 @@ def task(argv):
   """ Implement Zeckendorf's Arithmetic for addition, subtraction,
   muliplaction, and division.
   """
+  print("Integer")
+  a = Z(-23)
+  print(int(a))
+  
   print("Addition")
   a = Z("0z10")
   print(a)

@@ -1,11 +1,26 @@
 import functools
+import numbers
+import re
 import sys
 
 @functools.total_ordering()
 class Z:
   def __init__(self,val):
-    pass
-
+    if isinstance(val,numbers.Number):
+      self.sign = abs(val) == val
+      self.value = self._int_to_value(abs(int(val)))
+    elif type(val) == Z:
+      self.sign = val.sign
+      self.value = val.value
+    elif type(val) == str:
+      if not re.fullmatch(r"0z0|\-?0z1[01]*",val):
+        raise ValueError("Malformed String")
+      self.sign = val[0] != "-"
+      self.value = self._str_to_value(val.split("0z")[-1])
+  def _str_to_value(val):
+    return 
+  def _int_to_value(val):
+    return 
   # Python Fluff
   def __repr__(self):
     pass

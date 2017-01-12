@@ -1,3 +1,5 @@
+from PIL import Image, ImageDraw, ImageColor
+
 import math
 import random
 import sys
@@ -52,7 +54,7 @@ def rasterize(points):
   return:
     rastered_points [(int,int)...] : approx. absolute positions
   """
-  return [ (int(xf),int(yf)) for xf,yf in points ]
+  return [ (int(round(xf)),int(round(yf))) for xf,yf in points ]
 
 def task(argv):
   """ Task Description """

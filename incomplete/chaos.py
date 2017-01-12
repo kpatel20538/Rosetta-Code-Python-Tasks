@@ -52,7 +52,7 @@ def rasterize(points):
   return:
     rastered_points [(int,int)...] : approx. absolute positions
   """
-  pass
+  return [ (int(xf),int(yf)) for xf,yf in points ]
 
 def task(argv):
   """ Task Description """

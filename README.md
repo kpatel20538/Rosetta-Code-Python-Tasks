@@ -31,7 +31,7 @@ of a Sierpinski Triangle should emerge."*
   *"Construct a Pythagoras tree of order 7 using only vectors 
 (no rotation or trig functions)."*
   
-- [ ] [RPN to Infix Conversion][Parsing RPN to Infix Conversion Task]
+- [x] [RPN to Infix Conversion][Parsing RPN to Infix Conversion Task]
 
   *"Create a program that takes an RPN representation of an expression 
 formatted as a space separated sequence of tokens and generates the 

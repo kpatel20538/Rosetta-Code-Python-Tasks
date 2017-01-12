@@ -22,16 +22,10 @@ class TestChaos(unittest.TestCase):
     staring_point = (16.0,0.0)
     reference_points = [(0.0,0.0)]
     logging.info("Referneces @ {}, Starting @ {} ".format(reference_points,staring_point))
-    generated_points = tasks.chaos.rasterize(tasks.chaos.chaos_game(reference_points,staring_point,timeout = 3))
+    generated_points = tasks.chaos.chaos_game(reference_points,staring_point,timeout = 3)
     logging.info("Points Generated: {}".format(generated_points))
-    self.assertListEqual(generated_points,[(16,0),(8,0),(4,0),(2,0)])
-  def test_rasterize(self):
-    """ Testing if rasterize rounds numbers cleanly"""
-    logging.info("test_rasterize()")
-    points = [(1.9,3.9),(1.1,3.9),(1.9,3.2),(1.5,3.5)]
-    logging.info("Rasterizing Points: {}".format(points))
-    rastered = tasks.chaos.rasterize(points)
-    logging.info("Post Rasterized Points: {}".format(rastered))
-    self.assertListEqual(rastered,[(2,4),(1,4),(2,3),(2,4)])
+    *_,last_point = generated_points
+    xl,yl = last_point
+    self.assertAlmostEqual(2.0,xl)
 if __name__ == '__main__':
   unittest.main()

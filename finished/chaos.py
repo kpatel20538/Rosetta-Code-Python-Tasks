@@ -46,16 +46,6 @@ def chaos_game(reference_point,starting_point,timeout=10000):
     generated_points.append((xi,yi))
   return generated_points
 
-def rasterize(points):
-  """ Rounds float tuples to int tuples
-  
-  args:
-    points [(float,float)...] : actual absolute positions
-  return:
-    rastered_points [(int,int)...] : approx. absolute positions
-  """
-  return [ (int(round(xf)),int(round(yf))) for xf,yf in points ]
-
 def task(argv):
   """ Task Description """
   # Initialize Canvas

@@ -68,12 +68,28 @@ class Z:
   def __bool__(self):
     return self != Z("0z0")
 
-
+  def _comparator(self,other):
+    if self.sign ^ other.sign:
+      return self.sign
+    if self.value.bit_length() > other.value.bit_length():
+      return self.sign
+    if self.value.bit_length() < other.value.bit_length():
+      return not self.sign
+    comp = self.value ^ other.value
+    if comp.bit_length():
+      msb = comp.bit_length()
+      return bool((self.value ^ (((~self.sign)<<msb)>>1)) & ((1<<msb)>>1))
+    return None
+  
+  
+  
   # Zeckendorf's Arithmetic
   def __lt__(self,other):
-    pass
+    comp = self._comparator(other)
+    return False if comp is None else not comp 
   def __eq__(self,other):
-    pass
+    comp = self._comparator(other)
+    return comp is None
   def __add__(self, other):
     pass
   def __sub__(self, other):
@@ -85,20 +101,25 @@ class Z:
       result += zb if self.value&i else 0
       i,za,zb = i<<1,zb,za+ab
     return result if res_sign else -result
+  def __divmod__(self, other):
+    res_sign = not (self.sign ^ self.other)
+    result,i,za,zb = Z("0z0"),1,abs(other),abs(other)
+    pass
   def __floordiv__(self, other):
     q,_ = divmod(self,other)
     return q
   def __mod__(self, other):
     _,r = divmod(self,other)
     return r
-  def __divmod__(self, other):
-    pass
   def __pow__(self, other, modulo=None):
     if other < Z("0z0") or (other == Z("0z0") and self == Z("0z0")):
       raise ValueError("Negative Power or 0^0 detected")
     result,i,za,zb = Z("0z0"),1,abs(other),abs(other)
     while i < 1<<self.value.bit_length():
-      result *= zb if self.value&i else 0
+      if self.value&i:
+        result *= zb
+        if modulo is not None:
+          result %= modulo
       i,za,zb = i<<1,zb,za*ab
     return result
   def __neg__(self):

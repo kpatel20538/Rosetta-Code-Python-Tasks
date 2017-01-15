@@ -5,60 +5,58 @@ import sys
 
 @functools.total_ordering
 class Z:
-  def __init__(self,value=None):
-    if value is None:
-      self.sign = True
-      self.value = 0
-    elif type(value) == Z:
-      self.sign = value.sign
-      self.value = value.value
-    elif type(value) == str:
-      if not re.fullmatch(r"0z0|\-?0z1[01]*",value):
-        raise ValueError("Malformed String")
-      self.sign = value[0] != "-"
-      self.value = self._str_to_value(value.split("0z")[-1])
-    elif isinstance(value,numbers.Number):
-      self.sign = abs(value) == value
-      self.value = self._int_to_value(abs(int(value)))
-  def _str_to_value(self,val):
-    v,i = 0,1
-    for c in val[::-1]:
-      if c == "1":
-        v |= i
+  def __init__(self,param=None):
+    if param is None:
+      self.sign,self.value = True,0
+    elif type(param) == Z:
+      self.sign,self.value = param.sign,param.value
+    elif type(param) == str:
+      self.sign, self.value = self._from_str(param)
+    elif isinstance(param,numbers.Number):
+      self.sign, self.value = self._from_numeric(param)
+  def _from_str(self,param):
+    if not re.fullmatch(r"0z0|\-?0z1[01]*",param):
+      raise ValueError("Malformed String : {}".format(param))
+    sign = param[0] != "-"
+    stream = param.split("0z")[-1][::-1]
+    value,i = 0,1
+    for character in stream:
+      if character == "1":
+        value |= i
       i <<= 1
-    return v
-  def _int_to_value(self,val):
+    return sign,value
+  def _from_numeric(self,param):
+    sign = abs(param) == param
+    value,stream = 0,abs(int(param))
     i,a,b = 1,1,1
-    while val >= b:
+    while stream >= b:
       i,a,b=i<<1,b,a+b
-    i,a,b=i>>1,b-a,a
-    v = 0
     while a > 0:
-      if val >= b:
-        val -= b
-        v |= i
+      if stream >= b:
+        stream -= b
+        value |= i
       i,a,b=i>>1,b-a,a
-    return v
+    return sign,value
+  
   # Python Fluff
   def __int__(self):
     """ to Base10 """
-    v,i,a,b = 0,1,1,1
-    while self.value > b:
+    out,i,a,b = 0,1,1,1
+    while self.value >= b:
       i,a,b = i<<1,b,b+a
     while a > 0:
       if self.value&i:
-        v += b 
+        out += b 
       i,a,b = i>>1,b-a,a
-    return (1 if self.sign else -1)*v
+    return out if self.sign else -out
   def __float__(self):
     return float(int(self))
   def __complex__(self):
     return complex(int(self))
   def __round__(self,n=None):
-    return Z(self)
+    return +self
   def __repr__(self):
-    return ("" if self.sign else "-")+"0z"+bin(self.value)[2:]
-      
+    return ("0z" if self.sign else "-0z")+bin(self.value)[2:]
   def __hash__(self):
     return hash(int(self))
   def __index__(self):
@@ -66,83 +64,17 @@ class Z:
   def __bool__(self):
     return self != Z("0z0")
   
-  def _comparator(self,other):
-    if self.sign ^ other.sign:
-      return self.sign
-    if self.value.bit_length() > other.value.bit_length():
-      return self.sign
-    if self.value.bit_length() < other.value.bit_length():
-      return not self.sign
-    comp = self.value ^ other.value
-    if comp.bit_length():
-      msb = comp.bit_length()
-      return bool((self.value ^ (((~self.sign)<<msb)>>1)) & ((1<<msb)>>1))
+  def _comparator(self,za,zb):
+    if za.sign ^ zb.sign:
+      return za.sign
+    difference = za.value ^ zb.value
+    if difference.bit_length():
+      msb = difference.bit_length()
+      left_magnitude = za.value&(1<<msb>>1)
+      return za.sign if left_magnitude else not za.sign
     return None
   
-  # Zeckendorf's Arithmetic
-  def __lt__(self,other):
-    comp = self._comparator(other)
-    return False if comp is None else not comp 
-  def __eq__(self,other):
-    comp = self._comparator(other)
-    return comp is None
-  def __add__(self, other):
-    signed_addition = self.sign ^ other.sign
-    a,b = abs(self),abs(other)
-    sign_res = self.sign
-    if signed_addition:
-      comp = a._comparator(b)
-      if comp is None:
-        return Z("0z0")
-      elif not comp:
-        sign_res = other.sign
-        a,b = b,a
-      carry = 0
-      summation = a.value & (~b.value)
-      difference = (~a.value) & b.value
-      window = 7 << summation.bit_length()
-      while window >> 3:
-        window >>= 1
-        carry_window = (carry&window) << 3 >> window.bit_length()
-        sum_window = (summation&window) << 3 >> window.bit_length()
-        diff_window = (difference&window) << 3 >> window.bit_length()
-        clear_carry,set_carry,clear_sum,set_sum,toggle_sum,clear_diff = 0,0,0,0,0,0
-        if (sum_window&4) or (carry_window&4) and (not (carry_window&3)):
-          clear_carry |= 4
-          toggle_sum |= 4
-          if (not sum_window&3) and (not diff_window&3):
-            set_sum |= 3
-          elif (not sum_window&3) and (not diff_window&3^2):
-            set_sum |= 1
-            clear_diff |= 2
-          elif (not sum_window&3^1) and (not diff_window&3^2):
-            set_carry |= 1
-            clear_sum |= 1
-            clear_diff |= 2
-          elif (not sum_window&3) and (not diff_window&3^1):
-            set_sum |= 2
-            clear_diff |= 1
-          else:
-            clear_carry = 0
-            toggle_sum = 0
-        carry &= ~(clear_carry << window.bit_length() >> 3)
-        carry |= (set_carry << window.bit_length() >> 3)
-        summation &= ~(clear_sum << window.bit_length() >> 3)
-        summation |= (set_sum << window.bit_length() >> 3)
-        summation ^= (toggle_sum << window.bit_length() >> 3)
-        difference &= ~(clear_diff << window.bit_length() >> 3)
-      if difference&1:
-        difference &= ~1
-        if carry&2:
-          carry &= ~2
-          summation |= 4
-        elif summation&2:
-          summation &= ~2
-          summation |= 1
-    else:
-      summation = self.value ^ other.value
-      carry = self.value & other.value
-    ## Removing Carry Flag
+  def _reduce_carry(self,carry,summation):
     window = 15 << carry.bit_length()
     while window >> 4:
       window >>= 1
@@ -186,14 +118,90 @@ class Z:
       carry &= ~2
       summation &= ~4
       summation |= 10
-    ## Canonizing
+    err_msg = "Carry Flag Failed to Reduce {} {}".format(bin(carry),bin(summation))
+    assert not carry,err_msg
+    return summation
+  
+  def _reduce_difference(self,summation,difference):
+    carry = 0
+    window = 7 << summation.bit_length()
+    while window >> 3:
+      window >>= 1
+      carry_window = (carry&window) << 3 >> window.bit_length()
+      sum_window = (summation&window) << 3 >> window.bit_length()
+      diff_window = (difference&window) << 3 >> window.bit_length()
+      clear_carry,set_carry,clear_sum,set_sum,toggle_sum,clear_diff = 0,0,0,0,0,0
+      if (sum_window&4) or (carry_window&4) and (not (carry_window&3)):
+        clear_carry |= 4
+        toggle_sum |= 4
+        if (not sum_window&3) and (not diff_window&3):
+          set_sum |= 3
+        elif (not sum_window&3) and (not diff_window&3^2):
+          set_sum |= 1
+          clear_diff |= 2
+        elif (not sum_window&3^1) and (not diff_window&3^2):
+          set_carry |= 1
+          clear_sum |= 1
+          clear_diff |= 2
+        elif (not sum_window&3) and (not diff_window&3^1):
+          set_sum |= 2
+          clear_diff |= 1
+        else:
+          clear_carry = 0
+          toggle_sum = 0
+      carry &= ~(clear_carry << window.bit_length() >> 3)
+      carry |= (set_carry << window.bit_length() >> 3)
+      summation &= ~(clear_sum << window.bit_length() >> 3)
+      summation |= (set_sum << window.bit_length() >> 3)
+      summation ^= (toggle_sum << window.bit_length() >> 3)
+      difference &= ~(clear_diff << window.bit_length() >> 3)
+    if difference&1:
+      difference &= ~1
+      if carry&2:
+        carry &= ~2
+        summation |= 4
+      elif summation&2:
+        summation &= ~2
+        summation |= 1
+    err_msg = "Difference Flag Failed to Reduce {} {} {}".format(bin(carry),bin(summation),bin(difference))
+    assert not difference,err_msg
+    return carry,summation
+  
+  def _cannonize(self,summation):
     window = (summation)<<1 & summation & (~summation>>1) 
     while window:
       summation ^= ((window<<1) | window | (window>>1))
       window = (summation)<<1 & summation & (~summation>>1)
+    return summation
+  
+  # Zeckendorf's Arithmetic
+  def __lt__(self,other):
+    comp = self._comparator(self,other)
+    return False if comp is None else not comp 
+  def __eq__(self,other):
+    comp = self._comparator(self,other)
+    return comp is None
+  def __add__(self, other):
+    signed_addition = self.sign ^ other.sign
+    za,zb = abs(self),abs(other)
+    sign_res = self.sign
+    if signed_addition:
+      if za == zb:
+        return Z("0z0")
+      elif zb > za:
+        sign_res = other.sign
+        za,zb = zb,za
+      carry = 0
+      summation = za.value & (~zb.value)
+      difference = (~za.value) & zb.value
+      carry,summation = self._reduce_difference(summation,difference)
+    else:
+      summation = za.value ^ zb.value
+      carry = za.value & zb.value
+    summation = self._reduce_carry(carry,summation)
     placeholder = Z()
     placeholder.sign = sign_res
-    placeholder.value = summation
+    placeholder.value = self._cannonize(summation)
     return placeholder
   def __sub__(self, other):
     return self + (-other)
@@ -232,6 +240,7 @@ class Z:
   def __pow__(self, other, modulo=None):
     if other < Z("0z0") or (other == Z("0z0") and self == Z("0z0")):
       raise ValueError("Negative Power or 0^0 detected")
+    res_sign = (abs(other)%Z("0z10") == Z("0z1")) or self.sign
     power,exponent = Z("0z1"),abs(other)
     i,a,b,za,zb = 1,Z("0z1"),Z("0z1"),abs(self),abs(self)
     while exponent > b:
@@ -240,7 +249,7 @@ class Z:
       if exponent.value&i:
         power *= zb
       i,a,b,za,zb = i>>1,b-a,a,zb//za,za
-    return power
+    return power if res_sign else -power
   def __neg__(self):
     placeholder = Z()
     placeholder.sign = not self.sign

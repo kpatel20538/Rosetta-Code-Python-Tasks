@@ -45,8 +45,9 @@ class Z:
     v,i,a,b = 0,1,1,1
     while self.value > b:
       i,a,b = i<<1,b,b+a
-    while i != 1:
-      v += b if self.value&i else 0
+    while a > 0:
+      if self.value&i:
+        v += b 
       i,a,b = i>>1,b-a,a
     return (1 if self.sign else -1)*v
   def __float__(self):
@@ -90,63 +91,108 @@ class Z:
     a,b = abs(self),abs(other)
     sign_res = self.sign
     if signed_addition:
-      comp = self._comparator(other)
+      comp = a._comparator(b)
       if comp is None:
         return Z("0z0")
       elif not comp:
         sign_res = other.sign
         a,b = b,a
-      summation = a.value
-      difference = b.value
       carry = 0
-      ## Removing Difference Flag
-      while difference:
-        nonzero = summation | carry
-        zero = ~nonzero
-  
-        rule1 = nonzero & difference
-        rule2 = nonzero & zero << 1 & ((difference & ~1) << 1)
-        rule3 = nonzero & zero << 1 & zero << 2 & difference << 2
-        rule4 = nonzero & zero << 1 & ((difference &  1) << 1)
-        rule5 = nonzero & zero << 1 & zero << 2 & ~difference & ~(difference << 1) & ~(difference << 2)
-  
-        carry_down = rule1 | rule2 | rule3 | rule4 | rule5
-        increment = rule2 >> 2
-        set_bit = rule3 >> 1 |rule4 >> 1 | rule5 >> 1 | rule5 >> 2
-        clear_bit = rule1 | rule2 >> 1 | rule3 >> 2 | rule4 >> 1
-  
-        carry = (carry & ~carry_down)
-        summation = (summation ^ carry_down)
-        carry = carry | ((summation | set_bit) & increment)
-        summation = (summation | set_bit) ^ increment
-        difference = difference & ~clear_bit
+      summation = a.value & (~b.value)
+      difference = (~a.value) & b.value
+      window = 7 << summation.bit_length()
+      while window >> 3:
+        window >>= 1
+        carry_window = (carry&window) << 3 >> window.bit_length()
+        sum_window = (summation&window) << 3 >> window.bit_length()
+        diff_window = (difference&window) << 3 >> window.bit_length()
+        clear_carry,set_carry,clear_sum,set_sum,toggle_sum,clear_diff = 0,0,0,0,0,0
+        if (sum_window&4) or (carry_window&4) and (not (carry_window&3)):
+          clear_carry |= 4
+          toggle_sum |= 4
+          if (not sum_window&3) and (not diff_window&3):
+            set_sum |= 3
+          elif (not sum_window&3) and (not diff_window&3^2):
+            set_sum |= 1
+            clear_diff |= 2
+          elif (not sum_window&3^1) and (not diff_window&3^2):
+            set_carry |= 1
+            clear_sum |= 1
+            clear_diff |= 2
+          elif (not sum_window&3) and (not diff_window&3^1):
+            set_sum |= 2
+            clear_diff |= 1
+          else:
+            clear_carry = 0
+            toggle_sum = 0
+        carry &= ~(clear_carry << window.bit_length() >> 3)
+        carry |= (set_carry << window.bit_length() >> 3)
+        summation &= ~(clear_sum << window.bit_length() >> 3)
+        summation |= (set_sum << window.bit_length() >> 3)
+        summation ^= (toggle_sum << window.bit_length() >> 3)
+        difference &= ~(clear_diff << window.bit_length() >> 3)
+      if difference&1:
+        difference &= ~1
+        if carry&2:
+          carry &= ~2
+          summation |= 4
+        elif summation&2:
+          summation &= ~2
+          summation |= 1
     else:
       summation = self.value ^ other.value
       carry = self.value & other.value
     ## Removing Carry Flag
-    while carry:
-      zero = ~( summation | carry)
-      one = summation & ~carry
-      rule1 = carry & ~(carry&3)
-      rule2 = carry&3 & zero >> 1
-      rule3 = carry&3 & one >> 1 & zero >> 2
-      
-      clear_carry = rule1 | rule2 | rule3
-      clear_sum = rule1 | rule3 << 1
-      set_sum = rule2 << 1 | rule2 >> 1 | rule3 | rule3 << 2
-      increment = rule1 << 1 | rule1 >> 2
-      
-      carry &= ~clear_carry
-      summation &= ~clear_sum
-      carry = carry | ((summation | set_sum) & increment)
-      summation = (summation | set_sum) ^ increment
+    window = 15 << carry.bit_length()
+    while window >> 4:
+      window >>= 1
+      sum_window = (summation&window) << 4 >> window.bit_length()
+      carry_window = (carry&window) << 4 >> window.bit_length()
+      clear_carry,clear_sum,set_sum = 0,0,0
+      increment = False
+      if (not (carry_window >> 1)^2) and ((not (sum_window >> 1)) or (not (sum_window >> 1)^2)):
+        clear_carry |= 4
+        set_sum |= 8
+        increment = True
+      elif (not (carry_window >> 1)^2) and (not (sum_window >> 1)^1):
+        clear_carry |= 4
+        clear_sum |= 2
+        set_sum |= 12
+      elif (not (carry_window >> 1)^1) and (not (sum_window >> 1)^2):
+        clear_carry |= 2
+        clear_sum |= 4
+        set_sum |= 10
+      carry &= ~(clear_carry << window.bit_length() >> 4)
+      summation &= ~(clear_sum << window.bit_length() >> 4)
+      summation |= (set_sum << window.bit_length() >> 4)
+      if increment:
+        carry ^= ((sum_window&1) << window.bit_length() >> 4)
+        summation ^= (1 << window.bit_length() >> 4)
+    if (not carry&3^1) and ((not summation&3^1) or (not summation&3)):
+      carry &= ~1
+      summation |= 2
+    elif (not carry&7^2) and ((not summation&7^2) or (not summation&7)):
+      carry &= ~2
+      summation |= 5
+    elif (not carry&7^2) and (not summation&7^1):
+      carry &= ~2
+      summation &= ~1
+      summation |= 6
+    elif (not carry&7^1) and (not summation&7^2):
+      carry &= ~1
+      summation &= ~2
+      summation |= 5
+    elif (not carry&15^2) and (not summation&15^4):
+      carry &= ~2
+      summation &= ~4
+      summation |= 10
     ## Canonizing
     window = (summation)<<1 & summation & (~summation>>1) 
     while window:
       summation ^= ((window<<1) | window | (window>>1))
       window = (summation)<<1 & summation & (~summation>>1)
     placeholder = Z()
-    placeholder.sign = self.sign
+    placeholder.sign = sign_res
     placeholder.value = summation
     return placeholder
   def __sub__(self, other):
@@ -158,18 +204,18 @@ class Z:
     while operand > b:
       i,a,b,za,zb = i<<1,b,b+a,zb,zb+za
     while a > Z("0z0"):
-      if self.value&i:
+      if operand.value&i:
         product += zb
       i,a,b,za,zb = i>>1,b-a,a,zb-za,za
     return product if res_sign else -product
   def __divmod__(self, other):
     res_sign = not (self.sign ^ other.sign)
     quotient,remainder = Z("0z0"),abs(self)
-    a,b,za,zb = Z("0z1"),Z("0z1"),abs(other),abs(other)
+    a,b,za,zb = Z("0z1"),Z("0z1"),abs(other),abs(other)    
     while remainder > zb:
       a,b,za,zb = b,b+a,zb,zb+za
-    while remainder > abs(other):
-      if remainder > zb:
+    while remainder >= abs(other):
+      if remainder >= zb:
         quotient += b
         remainder -= zb
       a,b,za,zb = b-a,a,zb-za,za
@@ -186,14 +232,15 @@ class Z:
   def __pow__(self, other, modulo=None):
     if other < Z("0z0") or (other == Z("0z0") and self == Z("0z0")):
       raise ValueError("Negative Power or 0^0 detected")
-    result,i,za,zb = Z("0z1"),1,abs(self),abs(self)
-    while i < 1<<other.value.bit_length():
-      if other.value&i:
-        result *= zb
-        if modulo is not None:
-          result %= modulo
-      i,za,zb = i<<1,zb,za*ab
-    return result
+    power,exponent = Z("0z1"),abs(other)
+    i,a,b,za,zb = 1,Z("0z1"),Z("0z1"),abs(self),abs(self)
+    while exponent > b:
+      i,a,b,za,zb = i<<1,b,b+a,zb,zb*za
+    while a > Z("0z0"):
+      if exponent.value&i:
+        power *= zb
+      i,a,b,za,zb = i>>1,b-a,a,zb//za,za
+    return power
   def __neg__(self):
     placeholder = Z()
     placeholder.sign = not self.sign
@@ -206,7 +253,6 @@ class Z:
     placeholder.sign = True
     placeholder.value = self.value
     return placeholder
-
 
 def task(argv):
   """ Implement Zeckendorf's Arithmetic for addition, subtraction,
@@ -236,6 +282,9 @@ def task(argv):
   b = Z("0z10101010")
   b -= Z("0z1010101")
   print(b)
+  b = Z("0z10010")
+  b -= Z("0z100100")
+  print(b)
   
   print("Multication")
   c = Z("0z1001")
@@ -246,12 +295,16 @@ def task(argv):
   print(c)
   
   print("Division")
-  d = Z("0z1001010")
-  q = d//Z("0z1010")
-  r = d%Z("0z1010")
+  d = Z(100)
+  q = d//Z(7)
+  r = d%Z(7)
   print(q,r)
-  print(q*Z("0z1010")+r)
+  print(d,q*Z(7)+r)
   
+  print("Empower")
+  p = Z(6)
+  p **= Z(4)  
+  print(p)
   return 0
 
 if __name__ == "__main__":

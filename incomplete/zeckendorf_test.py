@@ -35,17 +35,17 @@ class TestZeckendorf(unittest.TestCase):
   def test_division(self):
     """ Zeckendorf Division """ 
     a = tasks.zeckendorf.Z("0z10000100")
-    b = tasks.zeckendorf.Z("0z10100001")
-    c = divmod(a,b)
-    d = tasks.zeckendorf.Z("-0z10100")
-    logging.info("{} / {} = {} == {}".format(a,b,c,d))
-    self.assertTupleEqual(c,d)
+    b = tasks.zeckendorf.Z("0z101001")
+    q,r = divmod(a,b)
+    logging.info("{} / {} = {} r {}".format(a,b,q,r))
+    logging.info("{} * {} + {} == {}".format(q,b,r,a)) 
+    self.assertEqual(q*b+r,a)
   def test_power(self):
     """ Zeckendorf Exponentiation """ 
-    a = tasks.zeckendorf.Z("0z1001")
-    b = tasks.zeckendorf.Z("0z101")
-    c = a * b
-    d = tasks.zeckendorf.Z("0z100100101000000")
+    a = tasks.zeckendorf.Z(6)
+    b = tasks.zeckendorf.Z(4)
+    c = a ** b
+    d = tasks.zeckendorf.Z(6**4)
     logging.info("{} ^ {} = {} == {}".format(a,b,c,d))
     self.assertEqual(c,d)
   def test_greater_than(self):
@@ -64,7 +64,7 @@ class TestZeckendorf(unittest.TestCase):
     """ Zeckendorf to Base10 """ 
     a = tasks.zeckendorf.Z("-0z1001")
     logging.info("|{}| = {}".format(a,int(a)))
-    self.assertEqual(int(a),6)
+    self.assertEqual(int(a),-6)
 
 if __name__ == '__main__':
   unittest.main()

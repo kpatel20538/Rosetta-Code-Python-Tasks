@@ -36,7 +36,6 @@ class Z:
   
   def __init__(self,param=None):
     """ Constructor
-    
     args:
       param (None|Z|str|Number) : value to be typecast
     raise:
@@ -97,7 +96,12 @@ class Z:
         value |= i
       i,a,b=i>>1,b-a,a
     return sign,value
-  
+  def _from_bitstring(self,sign,bitstring):
+    za = Z()
+    za.sign = sign
+    za.value = self._canonical_form(bitstring)
+    return za
+    
   def __int__(self):
     """ Z to int type conversion
     
@@ -119,7 +123,7 @@ class Z:
     """ Z to int to complex conversion """
     return complex(int(self))
   def __round__(self,n=None):
-    """ Calls Copy Constructor on self"""
+    """ Returns a copy of self"""
     return +self
   def __repr__(self):
     """ Z to string conversion (compatible with str.format()) """
@@ -154,7 +158,7 @@ class Z:
     """
     if za.sign ^ zb.sign: # Check for sign disagreement (e.g Z(-2) < z(1))
       return za.sign
-    difference = za.value ^ zb.value # Construct Xor Mask (difference)
+    difference = za.value ^ zb.value # Construct Xor Mask (approx. za-zb)
     if difference:
       msb = difference.bit_length() 
       # Check if za has a larger magnitude than zb
@@ -179,41 +183,42 @@ class Z:
     return:
       summation (int): equvialent noncanoical bitstring with 0 carry
     raise:
-      AssertError : carry flags wasn't cleared properly
+      AssertError : carry flag was not cleared.
     """
     # Window-Size : 4
     window = 15 << carry.bit_length()
     while window >> 4:
       # Create Windows
       window >>= 1
-      sum_window = (summation&window) << 4 >> window.bit_length()
-      carry_window = (carry&window) << 4 >> window.bit_length()
+      position = window.bit_length()
+      sum_window = (summation&window) << 4 >> position
+      carry_window = (carry&window) << 4 >> position
+      
       # Check if window matches rule
-      clear_carry,clear_sum,set_sum = 0,0,0
-      increment = False
       if (not (carry_window >> 1)^2) and ((not (sum_window >> 1)) or (not (sum_window >> 1)^2)):
         # 020x -> 100x'
         # 030x -> 110x'
-        clear_carry |= 4
-        set_sum |= 8
-        increment = True
+        clear_carry, set_carry, toggle_carry = 4,0,sum_window&1
+        clear_sum, set_sum, toggle_sum = 0,8,1
       elif (not (carry_window >> 1)^2) and (not (sum_window >> 1)^1):
         # 021x -> 110x
-        clear_carry |= 4
-        clear_sum |= 2
-        set_sum |= 12
+        clear_carry, set_carry, toggle_carry = 4,0,0
+        clear_sum, set_sum, toggle_sum = 2,12,0
       elif (not (carry_window >> 1)^1) and (not (sum_window >> 1)^2):
         # 012x -> 101x
-        clear_carry |= 2
-        clear_sum |= 4
-        set_sum |= 10
+        clear_carry, set_carry, toggle_carry = 2,0,0
+        clear_sum, set_sum, toggle_sum = 4,10,0       
+      else:
+        clear_carry, set_carry, toggle_carry = 0,0,0
+        clear_sum, set_sum, toggle_sum = 0,0,0
+      
       # Apply rules 
-      carry &= ~(clear_carry << window.bit_length() >> 4)
-      summation &= ~(clear_sum << window.bit_length() >> 4)
-      summation |= (set_sum << window.bit_length() >> 4)
-      if increment:
-        carry ^= ((sum_window&1) << window.bit_length() >> 4)
-        summation ^= (1 << window.bit_length() >> 4)
+      carry &= ~(clear_carry << position >> 4)
+      carry |=  (set_carry << position >> 4)
+      carry ^=  (toggle_carry << position >> 4)
+      summation &= ~(clear_sum << position >> 4)
+      summation |=  (set_sum << position >> 4)
+      summation ^=  (toggle_sum << position >> 4)
     # Clean up in rightmost-window
     if (not carry&3^1) and ((not summation&3^1) or (not summation&3)):
       # 02 -> 10 & 03 -> 11
@@ -277,7 +282,7 @@ class Z:
       diff_window = (difference&window) << 3 >> window.bit_length()
       # Check if window matches rule
       clear_carry,set_carry,clear_sum,set_sum,toggle_sum,clear_diff = 0,0,0,0,0,0
-      if (sum_window&4) or (carry_window&4) and (not (carry_window&3)):
+      if ((sum_window&4) or (carry_window&4)) and (not (carry_window&3)):
         # All Rules 2xx -> 1xx & 1xx -> 0xx
         clear_carry |= 4
         toggle_sum |= 4
@@ -363,10 +368,7 @@ class Z:
       carry = za.value & zb.value
       summation = za.value ^ zb.value
     summation = self._reduce_carry(carry,summation)
-    placeholder = Z()
-    placeholder.sign = sign_res
-    placeholder.value = self._canonical_form(summation)
-    return placeholder
+    return self._from_bitstring(sign_res,summation)
   def __sub__(self, other):
     """ Subtraction as Signed Addition"""
     return self + (-other)
@@ -418,20 +420,14 @@ class Z:
       i,a,b,za,zb = i>>1,b-a,a,zb//za,za
     return power if res_sign else -power
   def __neg__(self):
-    """ Invert Sign """
-    placeholder = Z()
-    placeholder.sign = not self.sign
-    placeholder.value = self.value
-    return placeholder
+    """ Calls _from_bitstring() on self to invert sign """
+    return self._from_bitstring(not self.sign,self.value)
   def __pos__(self):
-    """ Calls Copy Constructor on Self """
-    return Z(self)
+    """ Calls _from_bitstring() on self """
+    return self._from_bitstring(self.sign,self.value)
   def __abs__(self):
-    """ Force True Sign """
-    placeholder = Z()
-    placeholder.sign = True
-    placeholder.value = self.value
-    return placeholder
+    """ Calls _from_bitstring() on self to turn positive"""
+    return self._from_bitstring(True,self.value)
 
 def task(argv):
   """ Implement Zeckendorf's Arithmetic for addition, subtraction,

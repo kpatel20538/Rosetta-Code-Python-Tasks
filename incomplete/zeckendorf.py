@@ -5,7 +5,35 @@ import sys
 
 @functools.total_ordering
 class Z:
+  """ Zeckendorf Representation of Integer
+  
+    Represents an Integer as sum of Fibonacci Numbers.
+  
+    Zeckendorf Theorem states that every integer can be uniquely
+  represented as a sum of nonconsecutive Fibonacci Numbers. 
+  The resulting encoding statisfies Brown's Criterion, premitting it to 
+  be respresented as a unique bitstring.
+  
+    For the sake of completeness, this class will rely on the 
+  default int and arimethic and relational operators only when
+  typecasting [i.e. Z -> int ,int -> Z]. In all other cases, only bitwise
+  operators [^,&,|,~,>>,<<], boolean comparison operators [and,or,not] 
+  and the  int.bit_length() function will be used when 
+  manipulating integers.
+  
+  References and Sources:
+    [1] : Connor Ahlbach, Jeremy Usatine, Nicholas Pippenger
+      Efficient Algorithms for Zeckendorf Arithmetic
+      arXiv:1207.4497 [cs.DS] : https://arxiv.org/abs/1207.4497
+    [2] : N. J. A. Sloane 
+      Fibonacci numbers: F(n) = F(n-1) + F(n-2) with F(0) = 0 and F(1) = 1. 
+      A000045 : https://oeis.org/A000045
+  Attributes:
+    sign (bool) : whether the value is positive or negative
+    value (int) : positive bitstring in canonical form (see above.)
+  """
   def __init__(self,param=None):
+    """ Zeckendorf's Integer """
     if param is None:
       self.sign,self.value = True,0
     elif type(param) == Z:

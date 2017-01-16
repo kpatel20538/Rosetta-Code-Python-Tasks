@@ -26,19 +26,23 @@ starting point and one of the reference points. This reference point
 is chosen at random. After a sufficient number of iterations, the image 
 of a Sierpinski Triangle should emerge."*
 
-  [chaos.py](./finished/chaos.py)
+  [chaos.py](./finished/chaos.py), [chaos_test.py](./finished/chaos_test.py)
 
 - [x] [Pythagoras Tree][Pythagoras Tree Task]
 
   *"Construct a Pythagoras tree of order 7 using only vectors 
 (no rotation or trig functions)."*
   
+  [pythagoras.py](./finished/pythagoras.py), [pythagoras_test.py](./finished/pythagoras_test.py)
+
 - [x] [RPN to Infix Conversion][Parsing RPN to Infix Conversion Task]
 
   *"Create a program that takes an RPN representation of an expression 
 formatted as a space separated sequence of tokens and generates the 
 equivalent expression in infix notation."*
   
+    [rpninfix.py](./finished/rpninfix.py), [rpninfix_test.py](./finished/rpninfix_test.py)
+
 - [x] [Zeckendorf Arithmetic][Zeckendorf Arithmetic Task]
 
   *"This task is a total immersion zeckendorf task; using decimal 
@@ -47,6 +51,8 @@ numbers will attract serious disapprobation.*
   *The task is to implement addition, subtraction, multiplication, and 
 division using Zeckendorf number representation. Optionally provide 
 decrement, increment and comparitive operation functions."*
+
+  [zeckendorf.py](./finished/zeckendorf.py), [zeckendorf_test.py](./finished/zeckendorf_test.py)
 
 ## Executing Tasks
 A Dockerfile is provided to help with preparing/testing tasks

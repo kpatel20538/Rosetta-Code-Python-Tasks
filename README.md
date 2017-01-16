@@ -17,7 +17,7 @@ to Rosetta Code.
 ## Tasks Lists
 Task Descriptions are quoted from their associated task pages
 
-- [x] [Chaos Game][Chaos Game Task]
+- [x] [Chaos Game][Chaos Game Task] [] 
 
   *"Play the Chaos Game using the corners of an equilateral triangle as 
 the reference points. Add a starting point at random (preferably 
@@ -25,6 +25,8 @@ inside the triangle). Then add the next point halfway between the
 starting point and one of the reference points. This reference point 
 is chosen at random. After a sufficient number of iterations, the image 
 of a Sierpinski Triangle should emerge."*
+
+  [chaos.py](./finished/chaos.py)
 
 - [x] [Pythagoras Tree][Pythagoras Tree Task]
 
@@ -37,7 +39,7 @@ of a Sierpinski Triangle should emerge."*
 formatted as a space separated sequence of tokens and generates the 
 equivalent expression in infix notation."*
   
-- [ ] [Zeckendorf Arithmetic][Zeckendorf Arithmetic Task]
+- [x] [Zeckendorf Arithmetic][Zeckendorf Arithmetic Task]
 
   *"This task is a total immersion zeckendorf task; using decimal 
 numbers will attract serious disapprobation.*
